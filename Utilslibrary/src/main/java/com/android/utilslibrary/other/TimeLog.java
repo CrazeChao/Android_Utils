@@ -2,7 +2,6 @@
 
  import android.util.Log;
 
- import com.android.android_utils.BuildConfig;
 
  /**
  * Created by lizhichao on 3/31/21

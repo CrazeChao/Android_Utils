@@ -3,7 +3,8 @@
  import android.view.MotionEvent;
  import android.view.View;
 
- import com.android.utilslibrary.anim.CustomAnim;
+
+ import com.android.utilslibrary.view.anim.CustomAnim;
 
  import java.lang.ref.WeakReference;
 
