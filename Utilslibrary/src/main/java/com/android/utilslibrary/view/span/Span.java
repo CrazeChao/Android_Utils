@@ -5,12 +5,12 @@
  import android.text.Editable;
  import android.text.InputFilter;
  import android.text.Spannable;
- import android.text.SpannableString;
  import android.text.SpannableStringBuilder;
  import android.text.Spanned;
- import android.text.TextUtils;
+ import android.text.TextPaint;
  import android.text.style.AbsoluteSizeSpan;
  import android.text.style.BackgroundColorSpan;
+ import android.text.style.ClickableSpan;
  import android.text.style.ImageSpan;
  import android.text.style.ScaleXSpan;
  import android.text.style.StrikethroughSpan;
@@ -18,16 +18,18 @@
  import android.text.style.SubscriptSpan;
  import android.text.style.SuperscriptSpan;
  import android.text.style.TypefaceSpan;
-
+ import android.view.View;
+ import android.view.ViewTreeObserver;
+ import android.widget.TextView;
  import androidx.annotation.NonNull;
  import androidx.annotation.RequiresApi;
+ import java.util.HashMap;
+ import java.util.function.BiConsumer;
 
  /**
  * Created by lizhichao on 8/17/21
  */
  public class Span implements Spannable, Editable,CharSequence{
-
-
 
      @Override
      public Editable replace(int st, int en, CharSequence source, int start, int end) {
@@ -71,17 +73,17 @@
 
      @Override
      public void clear() {
-           builder.clear();
+         builder.clear();
      }
 
      @Override
      public void clearSpans() {
-          builder.clearSpans();
+         builder.clearSpans();
      }
 
      @Override
      public void setFilters(InputFilter[] filters) {
-          builder.setFilters(filters);
+         builder.setFilters(filters);
      }
 
      @Override
@@ -91,17 +93,17 @@
 
      @Override
      public void getChars(int start, int end, char[] dest, int destoff) {
-           builder.getChars(start,end,dest,destoff);
+         builder.getChars(start,end,dest,destoff);
      }
 
      @Override
      public void setSpan(Object what, int start, int end, int flags) {
-           builder.setSpan(what,start,end,flags);
+         builder.setSpan(what,start,end,flags);
      }
 
      @Override
      public void removeSpan(Object what) {
-           builder.removeSpan(what);
+         builder.removeSpan(what);
      }
 
      @Override
@@ -152,7 +154,6 @@
 
 
 
-     SpannableStringBuilder builder;
      public Span(String initString) {
          this.builder = new SpannableStringBuilder(initString);
      }
@@ -166,6 +167,64 @@
      }
 
 
+     public void bindTextView(TextView textView,ViewTreeObserver.OnPreDrawListener onPreDrawListener){
+         ViewVisitor onPreTextDrawListener = null;
+         if ((onPreTextDrawListener = textViewHashMap.get(textView)) != null){
+             onPreTextDrawListener.drinkTea();
+             textViewHashMap.remove(textView);
+         }
+         ViewVisitor viewVisitor = new ViewVisitor();
+         viewVisitor.visitor(textView);
+         viewVisitor.accept(onPreDrawListener);
+         textView.setText(this);
+         textViewHashMap.put(textView,viewVisitor);
+     }
+
+     @RequiresApi(api = Build.VERSION_CODES.N)
+     public void drinkTea(){
+         textViewHashMap.forEach(new BiConsumer<TextView, ViewVisitor>() {
+             @Override
+             public void accept(TextView textView, ViewVisitor viewVisitor) {
+                 viewVisitor.drinkTea();
+             }
+         });
+     }
+
+     public  static class ViewVisitor implements ViewTreeObserver.OnWindowAttachListener, ViewTreeObserver.OnPreDrawListener {
+         ViewTreeObserver viewTreeObserver;
+         ViewTreeObserver.OnPreDrawListener onPreDrawListener;
+         public void visitor(View view){
+             viewTreeObserver = view.getViewTreeObserver();
+             viewTreeObserver.addOnPreDrawListener(this);
+             viewTreeObserver.addOnWindowAttachListener(this);
+         }
+
+         public void accept( ViewTreeObserver.OnPreDrawListener onPreDrawListener){
+             this.onPreDrawListener = onPreDrawListener;
+         }
+
+         public void drinkTea(){
+             if (!viewTreeObserver.isAlive())return;
+             viewTreeObserver.removeOnPreDrawListener(this);
+             viewTreeObserver.removeOnWindowAttachListener(this);
+         }
+
+         @Override
+         public boolean onPreDraw() {
+             return onPreDrawListener.onPreDraw();
+         }
+
+         @Override
+         public void onWindowAttached() {
+
+         }
+
+         @Override
+         public void onWindowDetached() {
+             drinkTea();
+         }
+     }
+
      /**
       * 对当前字符修改
       * */
@@ -175,6 +234,7 @@
 
      public SpanBuilder describeSpan(String compareString){
          int start = builder.toString().indexOf(compareString);
+         if (start == -1) return null;
          return describeSpan(start,compareString.length());
      }
 
@@ -183,83 +243,123 @@
          return describeSpan(builder.length()-addString.length(),addString.length());
      }
 
-  //块配置
-  public static class SpanBuilder {
-      int start;
-      int count;
-      Spannable spannable;
-      public SpanBuilder(Spannable builder,int start, int count) {
-          this.start = start;
-          this.count = count;
-          this.spannable = builder;
-      }
+     //块配置
+     public static class SpanBuilder {
+         int start;
+         int count;
+         Spannable spannable;
 
-      private void inflateSpan(Spannable spannableString, int start, int count, Object what){
-          spannableString.setSpan(what,start,start+count, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-      }
+         public SpanBuilder(Spannable builder,int start, int count) {
+             this.start = start;
+             this.count = count;
+             this.spannable = builder;
+         }
 
-      private void inflateSpan(Spannable spannableString, int start, int count, Object what,int type){
-          spannableString.setSpan(what,start,start+count, type);
-      }
+         private void inflateSpan(Spannable spannableString, int start, int count, Object what){
+             spannableString.setSpan(what,start,start+count, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+         }
 
-      private  void inflateSpan(Object span){
-          inflateSpan(spannable,start,count,span);
-      }
+         private void inflateSpan(Spannable spannableString, int start, int count, Object what,int type){
+             spannableString.setSpan(what,start,start+count, type);
+         }
 
-      public SpanBuilder subscript(){
-           inflateSpan(new SubscriptSpan());
-           return this;
-      }
+         private  void inflateSpan(Object span){
+             inflateSpan(spannable,start,count,span);
+         }
 
-      public SpanBuilder scaleSpanX(float scale){
-          inflateSpan(new ScaleXSpan(scale));
-          return this;
-      }
+         public SpanBuilder subscript(){
+             inflateSpan(new SubscriptSpan());
+             return this;
+         }
 
-      public SpanBuilder absoluteSizeSpan(int px){
-          inflateSpan(new AbsoluteSizeSpan(px,false));
-         return this;
-      }
+         public SpanBuilder scaleSpanX(float scale){
+             inflateSpan(new ScaleXSpan(scale));
+             return this;
+         }
 
-      public SpanBuilder absoluteSizeSpan(int value,boolean isDip){
-          inflateSpan(new AbsoluteSizeSpan(value,isDip));
-          return this;
-      }
+         public SpanBuilder absoluteSizeSpan(int px){
+             inflateSpan(new AbsoluteSizeSpan(px,false));
+             return this;
+         }
 
-      public SpanBuilder backGroundColorSpan(int color){
-          inflateSpan(new BackgroundColorSpan(color));
-          return this;
-      }
-      public SpanBuilder deleteLine(){
-          inflateSpan(new StrikethroughSpan());
-          return this;
-      }
+         public SpanBuilder absoluteSizeSpan(int value,boolean isDip){
+             inflateSpan(new AbsoluteSizeSpan(value,isDip));
+             return this;
+         }
 
-      public SpanBuilder typeFaceSpan(String family ){
-              inflateSpan(new TypefaceSpan(family));
-          return this;
-      }
-      @RequiresApi(api = Build.VERSION_CODES.P)
-      public SpanBuilder typeFaceSpan(Typeface typeface){
-              inflateSpan(new TypefaceSpan(typeface));
-              return this;
-      }
-      public SpanBuilder imageSpan(Drawable drawable){
+         public SpanBuilder backGroundColorSpan(int color){
+             inflateSpan(new BackgroundColorSpan(color));
+             return this;
+         }
+
+         public SpanBuilder deleteLine(){
+             inflateSpan(new StrikethroughSpan());
+             return this;
+         }
+
+         public SpanBuilder typeFaceSpan(String family ){
+             inflateSpan(new TypefaceSpan(family));
+             return this;
+         }
+
+         @RequiresApi(api = Build.VERSION_CODES.P)
+         public SpanBuilder typeFaceSpan(Typeface typeface){
+             inflateSpan(new TypefaceSpan(typeface));
+             return this;
+         }
+
+         public SpanBuilder imageSpan(Drawable drawable){
              inflateSpan(new ImageSpan(drawable));
              return this;
-      }
+         }
+         public SpanBuilder imageSpan(Drawable drawable,int style){
+             inflateSpan(new ImageSpan(drawable,style));
+             return this;
+         }
 
-      public SpanBuilder styleSpan(int style){
-          inflateSpan(new StyleSpan(style));
-          return this;
-      }
-      public SpanBuilder superScriptSpan(){
-          inflateSpan(new SuperscriptSpan());
-          return this;
-      }
-      
+         public SpanBuilder styleSpan(int style){
+             inflateSpan(new StyleSpan(style));
+             return this;
+         }
+         public SpanBuilder superScriptSpan(){
+             inflateSpan(new SuperscriptSpan());
+             return this;
+         }
+         public SpanBuilder setOnClick(final View.OnClickListener onClickListener){
+             inflateSpan(new ClickableSpan() {
+                 @Override
+                 public void onClick(@NonNull View widget) {
+                     onClickListener.onClick(widget);
+                 }
+             });
+             return this;
+         }
+         public SpanBuilder customSpan(Object what){
+             inflateSpan(what);
+             return this;
+         }
 
-  }
 
+     }
+     public static class CustomScriptSpan extends SuperscriptSpan{
+         int baseLine;
 
-}
+         public CustomScriptSpan(int baseLine) {
+             this.baseLine = baseLine;
+         }
+
+         @Override
+         public void updateDrawState( TextPaint textPaint) {
+             textPaint.baselineShift = baseLine;
+         }
+
+         @Override
+         public void updateMeasureState( TextPaint textPaint) {
+             textPaint.baselineShift = baseLine;
+         }
+     }
+
+     SpannableStringBuilder builder;
+     private static HashMap<TextView, ViewVisitor> textViewHashMap = new HashMap();
+
+ }

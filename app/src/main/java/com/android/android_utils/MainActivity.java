@@ -7,8 +7,10 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.utilslibrary.view.span.Span;
 import com.android.utilslibrary.view.touch.ClickAlphaAnimAdapter;
@@ -40,7 +42,14 @@ public class MainActivity extends AppCompatActivity {
         Drawable draw = getDrawable(R.drawable.ic_launcher_foreground);
         draw.setBounds(0,0,100,100);
         span.addSpanString("图").imageSpan(draw);
+        span.addSpanString("hello World!").setOnClick(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(v.getContext(),"Hello World!",1).show();
+            }
+        });
         TextView textView = (TextView) view;
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setText(span);
     }
 }
