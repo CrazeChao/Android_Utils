@@ -92,7 +92,7 @@ public class ThreadUtils {
     public static void postOnMainThread(Runnable runnable,long delay) {
         getUiThreadHandler().postDelayed(runnable,delay);
     }
-    public static void removeCallbacks(Runnable ... runnable){
+    public static void removeMainCallbacks(Runnable ... runnable){
         if (runnable == null)return;
         for (int i = 0; i < runnable.length; i++) {
             getUiThreadHandler().removeCallbacks(runnable[i]);

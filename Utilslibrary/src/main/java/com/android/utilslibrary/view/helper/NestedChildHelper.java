@@ -14,12 +14,12 @@ public class NestedChildHelper<T> extends NestedHelper<T> {
         if (view instanceof ViewGroup){
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
-                View childview = group.getChildAt(i);
+                View childView = group.getChildAt(i);
                 try {
-                    f.apply((T) childview);
+                    f.apply((T) childView);
                 } catch (ClassCastException e) {
                 }
-                nestedView(childview,f);
+                nestedView(childView,f);
             }
         }
     }

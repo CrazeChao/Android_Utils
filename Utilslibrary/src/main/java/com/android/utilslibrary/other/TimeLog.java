@@ -5,6 +5,9 @@
 
  /**
  * Created by lizhichao on 3/31/21
+  *
+  * 记时工具
+  *
  */
  public  class TimeLog {
     private static TimeLog log = new TimeLog();

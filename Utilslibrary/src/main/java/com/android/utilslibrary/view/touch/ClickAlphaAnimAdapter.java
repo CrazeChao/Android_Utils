@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 /**
  * 锁屏专用适配器
  * */
-public class ClickAlphaAnimAdapter implements ITouchAgent {
+public class     ClickAlphaAnimAdapter implements ITouchAgent {
      WeakReference<View> viewWeakReference;
      public ClickAlphaAnimAdapter(View view) {
          this.viewWeakReference = new WeakReference<>(view);
