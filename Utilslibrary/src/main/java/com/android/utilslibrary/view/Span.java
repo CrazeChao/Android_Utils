@@ -1,4 +1,4 @@
- package com.android.utilslibrary.view.span;
+ package com.android.utilslibrary.view;
  import android.graphics.Typeface;
  import android.graphics.drawable.Drawable;
  import android.os.Build;
@@ -8,6 +8,8 @@
  import android.text.SpannableStringBuilder;
  import android.text.Spanned;
  import android.text.TextPaint;
+ import android.text.method.LinkMovementMethod;
+ import android.text.method.MovementMethod;
  import android.text.style.AbsoluteSizeSpan;
  import android.text.style.BackgroundColorSpan;
  import android.text.style.ClickableSpan;
@@ -28,6 +30,34 @@
 
  /**
  * Created by lizhichao on 8/17/21
+  *
+  * 富文本封装
+  *
+  *   //使用方式1
+  *         Span span = new Span();
+  *         span.addSpanString("第一个玩意").deleteLine();
+  *         span.addSpanString("第二个玩意").absoluteSizeSpan(60);
+  *         span.addSpanString("第三个玩意").scaleSpanX(1.3f);
+  *         span.addSpanString("第四个玩意").typeFaceSpan(Typeface.DEFAULT_BOLD);
+  *
+  *         Drawable draw = getDrawable(R.drawable.ic_launcher_foreground);
+  *         draw.setBounds(0,0,100,100);
+  *         span.addSpanString("图").imageSpan(draw);
+  *         span.addSpanString("hello World!").setOnClick(textView,new View.OnClickListener() {
+  *             @Override
+  *             public void onClick(View v) {
+  *                 Toast.makeText(v.getContext(),"Hello World!",1).show();
+  *             }
+  *         });
+  *         textView.setText(span);
+  *
+  *
+  *  //使用方式2
+  *         Span span2 = new Span("没有关系我们只是朋友，所以没有分开的理由！ 激情四射");
+  *         span2.describeSpan(0,1).deleteLine();
+  *         span2.describeSpan("只是朋友").deleteLine();
+  *         textView.setText(span2);
+  *
  */
  public class Span implements Spannable, Editable,CharSequence{
 
@@ -180,6 +210,10 @@
          textViewHashMap.put(textView,viewVisitor);
      }
 
+
+
+
+
      @RequiresApi(api = Build.VERSION_CODES.N)
      public void drinkTea(){
          textViewHashMap.forEach(new BiConsumer<TextView, ViewVisitor>() {
@@ -248,6 +282,7 @@
          int start;
          int count;
          Spannable spannable;
+
 
          public SpanBuilder(Spannable builder,int start, int count) {
              this.start = start;
@@ -325,13 +360,14 @@
              inflateSpan(new SuperscriptSpan());
              return this;
          }
-         public SpanBuilder setOnClick(final View.OnClickListener onClickListener){
+         public SpanBuilder setOnClick(TextView textView,final View.OnClickListener onClickListener){
              inflateSpan(new ClickableSpan() {
                  @Override
                  public void onClick(@NonNull View widget) {
                      onClickListener.onClick(widget);
                  }
              });
+             textView.setMovementMethod(LinkMovementMethod.getInstance());
              return this;
          }
          public SpanBuilder customSpan(Object what){
